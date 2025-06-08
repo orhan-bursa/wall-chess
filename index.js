@@ -35,16 +35,29 @@ const LINES = {
     width: 10,
     countVertical: 10,
     countHorizontal: 10,
-    fullCountVertical: 10,
-    fullCountHorizontal: 14
 }
+
+const WALLS = {
+    countTop: 9,
+    countBottom: 9,
+    countTotal: 18,
+    thickness: LINES.width,
+    length: LINES.width + TILES.width * 2
+}
+
+
+const TOP_OFFSET = 2 * TILES.height + 2 * LINES.width
+const TOP_OFFSET_TO_TILES = TOP_OFFSET + LINES.width
+const LEFT_OFFSET = 2 * TILES.width + 2 * LINES.width
+const LEFT_OFFSET_TO_TILES = LEFT_OFFSET + LINES.width
+
+const SPACING_X = TILES.width + LINES.width
+const SPACING_Y = TILES.height + LINES.width
+
 const MAP = {
-    width: TILES.fullCountX * TILES.width + LINES.countVertical * LINES.width,
-    height: TILES.fullCountY * TILES.height + LINES.fullCountHorizontal * LINES.width,
+    width: TILES.countX * TILES.width + LINES.countVertical * LINES.width + 2 * LEFT_OFFSET,
+    height: TILES.countY * TILES.height + LINES.countHorizontal * LINES.width + 2 * TOP_OFFSET,
 }
-
-console.log(MAP)
-
 
 /** @type {HTMLCanvasElement | null} */
 const canvas = document.getElementById('wall-chess-canvas')
@@ -58,46 +71,151 @@ assert(!!ctx, "ctx must exist")
 
 console.log('initialized')
 
+/** @type {Array<'a'|'b'|'c'|'d'|'e'|'f'|'g'|'h'|'i'>}*/
+const xAxisNames = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i']
+/** @type {Array<'1'|'2'|'3'|'4'|'5'|'6'|'7'|'8'|'9'>}*/
+const yAxisNames = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
+
+/**
+ * @param {Tuple<xAxisNames[number] | yAxisNames[number]> } between
+ * @param {Tuple<xAxisNames[number] | yAxisNames[number]> } along
+*/
+function drawWall(between, along) {
+
+}
+
+function drawInitialWalls() {
+    //TOP walls
+    for (let i = 0; i < WALLS.countTop; i++) {
+        const x = LEFT_OFFSET + i * SPACING_X
+        const y = LINES.width
+
+        ctx.fillStyle = THEME.wall
+        ctx.fillRect(x, y, WALLS.thickness, WALLS.length)
+    }
+
+    //BOTTOM walls
+    for (let i = 0; i < WALLS.countBottom; i++) {
+        const x = LEFT_OFFSET + SPACING_X + i * SPACING_X
+        const y = canvas.height - TOP_OFFSET
+
+        ctx.fillStyle = THEME.wall
+        ctx.fillRect(x, y, WALLS.thickness, WALLS.length)
+    }
+
+}
+
+
+
 function drawMapLines() {
     ctx.fillStyle = THEME.line;
     //TOP and BOTTOM first horizontal lines
     ctx.fillRect(0, 0, canvas.width, LINES.width)
     ctx.fillRect(0, canvas.height - LINES.width, canvas.width, LINES.width)
 
+    ctx.fillRect(0, 0, LINES.width, canvas.height)
+    ctx.fillRect(canvas.width - LINES.width, 0, LINES.width, canvas.height)
+
+    // LEFT and RIGHT empty spaces
+    ctx.fillRect(0, TOP_OFFSET, LEFT_OFFSET, canvas.height - TOP_OFFSET * 2)
+    ctx.fillRect(canvas.width - LEFT_OFFSET, TOP_OFFSET, LEFT_OFFSET, canvas.height - TOP_OFFSET * 2)
+
+
     //Horizontal Lines
     for (let i = 0; i < LINES.countHorizontal; i++) {
-        const offset = TILES.height * 2 + LINES.width * 2
-        const spacing = TILES.height + LINES.width
+        const offset = TOP_OFFSET
+        const spacing = SPACING_Y
         ctx.fillRect(0, offset + i * spacing, canvas.width, LINES.width)
     }
     //Vertical Lines
     for (let i = 0; i < LINES.countVertical; i++) {
-        const spacing = TILES.width + LINES.width
-        ctx.fillRect(i * spacing, 0, LINES.width, canvas.height)
+        const offset = LEFT_OFFSET
+        const spacing = SPACING_X
+        ctx.fillRect(offset + i * spacing, 0, LINES.width, canvas.height)
     }
 }
-
 function drawBackground() {
-    // Fill background
     ctx.fillStyle = THEME.tile;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    drawMapLines()
 }
-// function drawSprite(sprite) {
-//     ctx.fillStyle = sprite.color;
-//     ctx.fillRect(sprite.x, sprite.y, sprite.width, sprite.height);
-// }
+function writeTileAxisNames() {
+
+    ctx.fillStyle = 'white';
+    ctx.font = '14px sans-serif';
+    for (let i = 0; i < TILES.countX; i++) {
+        const offsetX = LEFT_OFFSET_TO_TILES + TILES.width / 2 - 5
+        const offsetY = TOP_OFFSET_TO_TILES - TILES.width / 2
+        const spacingX = SPACING_X
+        const x = offsetX + i * spacingX
+        const y = offsetY
+
+        ctx.fillText(xAxisNames[i].toUpperCase(), x, y);
+    }
+    for (let i = 0; i < TILES.countY; i++) {
+        const offsetX = LEFT_OFFSET_TO_TILES
+        const offsetY = TOP_OFFSET_TO_TILES
+        const spacingY = SPACING_Y
+
+        const x = offsetX - TILES.width / 2
+        const y = offsetY + i * spacingY + TILES.width / 2 + 5
+
+        ctx.fillText(yAxisNames[i], x, y);
+    }
+}
+
+/**
+ * @param {xAxisNames[number]} xName
+ * @param {yAxisNames[number]} yName
+*/
+function getTileByAxisNames(xName, yName) {
+    const xIndex = xAxisNames.indexOf(xName)
+    const yIndex = yAxisNames.indexOf(yName)
+
+    const x = xIndex === -1 ? 0 : LEFT_OFFSET_TO_TILES + xIndex * SPACING_X
+    const y = yIndex === -1 ? 0 : TOP_OFFSET_TO_TILES + yIndex * SPACING_Y
+
+    return {
+        x,
+        y,
+        xName,
+        yName,
+        corners: {
+            'top-left': {
+                x,
+                y
+            },
+            'top-right': {
+                x: x + TILES.width,
+                y
+            },
+            'bottom-right': {
+                x: x + TILES.width,
+                y: y + TILES.height
+            },
+            'bottom-left': {
+                x,
+                y: y + TILES.height
+            }
+        },
+        center: {
+            x: x + TILES.width / 2,
+            y: y + TILES.height / 2
+        }
+    }
+
+}
 
 function update(dt) {
     // Update game state (e.g., positions, physics)
     console.log('update')
 }
-
 function render() {
-    // Draw background
     drawBackground();
-    // drawSprite(player);
+    drawMapLines();
+    writeTileAxisNames()
+    drawInitialWalls()
+
 }
 
 let lastTime = 0;
