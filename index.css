@@ -3,3 +3,8 @@ body {
     height: 100vh;
     background-color: #c2c2c2;
 }
+
+.canvas-container {
+    width: max-content;
+    margin-inline: auto;
+}
