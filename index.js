@@ -13,7 +13,8 @@ const COLORS = {
     brown: '#5b4946',
     black: '#2d2a25',
     gray: '#b7b5af',
-    scarlet: '#782822'
+    scarlet: '#782822',
+    mustard: '#dab667'
 }
 
 const THEME = {
@@ -21,7 +22,8 @@ const THEME = {
     tile: COLORS.black,
     wall: COLORS.yellow,
     line: COLORS.red,
-    pawn: COLORS.scarlet
+    pawnTop: COLORS.mustard,
+    pawnBottom: COLORS.scarlet
 }
 
 const TILES = {
@@ -60,7 +62,51 @@ const MAP = {
     width: TILES.countX * TILES.width + LINES.countVertical * LINES.width + 2 * LEFT_OFFSET,
     height: TILES.countY * TILES.height + LINES.countHorizontal * LINES.width + 2 * TOP_OFFSET,
 }
+/**
+ * @typedef {{x: number, y: number}} LocationXY
+*/
 
+
+/**
+ * Rectangle Type
+ * @typedef {Object} Rect
+ * @property {number} x
+ * @property {number} y
+ * @property {number} width 
+ * @property {number} height
+*/
+/**
+ * Player Type
+ * @typedef {Object} Player
+ * @property {LocationXY} lastClick - Last click location
+*/
+
+/**
+ * Game state
+ * @typedef {Object} GameState
+ * @property {boolean} round - Round of games played. Starts at 1.
+ * @property {LocationXY} lastClick - Last click location.
+ * @property {"one" | "two" } activePlayer - The player that will make the next move. 
+ * @property {{one: Player, two: Player}} players - Data with playes one and two.
+ */
+
+/** @type {GameState} */
+let state = {
+    round: 1,
+    lastClick: { x: 0, y: 0 },
+    activePlayer: 'one',
+    players: {
+        one: {
+            lastClick: { x: 0, y: 0 }
+        },
+        two: {
+            lastClick: { x: 0, y: 0 }
+        }
+    }
+
+}
+
+console.log(state)
 /** @type {HTMLCanvasElement | null} */
 const canvas = document.getElementById('wall-chess-canvas')
 assert(!!canvas, "canvas must exist")
@@ -72,6 +118,21 @@ const ctx = canvas.getContext("2d")
 assert(!!ctx, "ctx must exist")
 
 console.log('initialized')
+
+canvas.addEventListener('click', (event) => {
+    const x = event.offsetX;
+    const y = event.offsetY;
+    console.log(`Clicked at: x=${x}, y=${y}`);
+
+    if (x && y) {
+        state.lastClick = { x, y }
+        console.log(state)
+        state.players[state.activePlayer].lastClick = { x, y }
+
+        const box = getTileByAxisNames('h', '2')
+        console.log(box)
+    }
+});
 
 /** @type {Array<'a'|'b'|'c'|'d'|'e'|'f'|'g'|'h'|'i'>}*/
 const xAxisNames = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i']
@@ -108,9 +169,9 @@ function drawInitialWalls() {
 }
 
 /**
- * @param {{ x: number, y: number, radius?: number, counterclockwise?: boolean, color?:string }} args
+ * @param {{ x: number, y: number, color:string, radius?: number, counterclockwise?: boolean  }} args
  */
-function drawPawn({ x, y, radius = TILES.width / 3, color = THEME.pawn }) {
+function drawPawn({ x, y, radius = TILES.width / 3, color }) {
     ctx.beginPath()
     ctx.arc(x, y, radius, 0, Math.PI * 2)
     ctx.fillStyle = color
@@ -120,14 +181,50 @@ function drawPawn({ x, y, radius = TILES.width / 3, color = THEME.pawn }) {
 function drawInitialPawns() {
     const topPawn = {
         x: LEFT_OFFSET_TO_TILES + 4 * SPACING_X + TILES.width / 2,
-        y: TILES.height
+        y: TILES.height,
+        color: THEME.pawnTop
     }
+    /** @type {Rect}*/
+    const topPawnRect = {
+
+        x: topPawn.x - TILES.width / 2,
+        y: topPawn.y - TILES.width / 2,
+        width: TILES.width,
+        height: TILES.height
+    }
+
     const bottomPawn = {
         x: LEFT_OFFSET_TO_TILES + 4 * SPACING_X + TILES.width / 2,
-        y: canvas.height - TILES.height
+        y: canvas.height - TILES.height,
+        color: THEME.pawnBottom
     }
     drawPawn({ ...topPawn })
     drawPawn({ ...bottomPawn })
+
+    ctx.fillStyle = 'red'
+    ctx.fillRect(topPawn.x - TILES.width / 2, topPawn.y - TILES.width / 2, TILES.width, TILES.height)
+}
+
+/**
+ * @param {LocationXY} point
+ * @param {Rect} rect 
+*/
+function isPointInsideRect(point, rect) {
+    const clickX = point.x
+    const clickY = point.y
+
+
+    const isXInside =
+        (clickX > rect.x)
+        &&
+        (clickX < rect.x + rect.width)
+
+    const isYInside =
+        (clickY > rect.y)
+        &&
+        (clickY < rect.y + rect.height)
+
+    return isXInside && isYInside
 }
 
 
