@@ -12,7 +12,8 @@ const COLORS = {
     yellow: '#e8c87d',
     brown: '#5b4946',
     black: '#2d2a25',
-    gray: '#b7b5af'
+    gray: '#b7b5af',
+    scarlet: '#782822'
 }
 
 const THEME = {
@@ -20,6 +21,7 @@ const THEME = {
     tile: COLORS.black,
     wall: COLORS.yellow,
     line: COLORS.red,
+    pawn: COLORS.scarlet
 }
 
 const TILES = {
@@ -103,6 +105,29 @@ function drawInitialWalls() {
         ctx.fillRect(x, y, WALLS.thickness, WALLS.length)
     }
 
+}
+
+/**
+ * @param {{ x: number, y: number, radius?: number, counterclockwise?: boolean, color?:string }} args
+ */
+function drawPawn({ x, y, radius = TILES.width / 3, color = THEME.pawn }) {
+    ctx.beginPath()
+    ctx.arc(x, y, radius, 0, Math.PI * 2)
+    ctx.fillStyle = color
+    ctx.fill()
+}
+
+function drawInitialPawns() {
+    const topPawn = {
+        x: LEFT_OFFSET_TO_TILES + 4 * SPACING_X + TILES.width / 2,
+        y: TILES.height
+    }
+    const bottomPawn = {
+        x: LEFT_OFFSET_TO_TILES + 4 * SPACING_X + TILES.width / 2,
+        y: canvas.height - TILES.height
+    }
+    drawPawn({ ...topPawn })
+    drawPawn({ ...bottomPawn })
 }
 
 
@@ -211,11 +236,11 @@ function update(dt) {
     console.log('update')
 }
 function render() {
-    drawBackground();
-    drawMapLines();
+    drawBackground()
+    drawMapLines()
     writeTileAxisNames()
     drawInitialWalls()
-
+    drawInitialPawns()
 }
 
 let lastTime = 0;
